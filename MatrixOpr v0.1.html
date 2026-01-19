@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Opr</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        .matrix-grid {
+            display: grid;
+            gap: 4px;
+            justify-content: center;
+        }
+
+        .matrix-cell {
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .matrix-cell:focus {
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            border-color: #818cf8;
+            background-color: #1e293b;
+        }
+
+        .bracket-container {
+            position: relative;
+            padding: 0 12px;
+            display: inline-block;
+        }
+
+        .bracket-l, .bracket-r {
+            position: absolute;
+            width: 12px;
+            top: 0;
+            bottom: 0;
+            border: 2px solid #94a3b8;
+        }
+
+        .bracket-l {
+            left: 0;
+            border-right: none;
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+
+        .bracket-r {
+            right: 0;
+            border-left: none;
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        .op-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .op-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        .op-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-8 px-4">
+
+    <div id="toast" class="fixed top-6 right-6 z-50 transform translate-x-32 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-indigo-600 text-white px-4 py-2 rounded shadow-lg flex items-center gap-2">
+            <i class="fas fa-info-circle"></i>
+            <span id="toast-msg">Message</span>
+        </div>
+    </div>
+
+    <header class="mb-8 text-center">
+        <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">
+            Matrix Operations
+        </h1>
+    </header>
+
+    <main class="w-full max-w-6xl flex flex-col gap-8">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            
+            <div class="flex flex-col items-center">
+                <div class="flex items-center gap-4 mb-4 bg-slate-800/50 p-2 rounded-lg border border-slate-700">
+                    <span class="font-bold text-indigo-400 px-2">A</span>
+                    
+                    <div class="flex items-center gap-2 text-sm">
+                        <!-- Rows A -->
+                        <div class="flex items-center">
+                            <input type="number" id="rowsA" value="3" min="1" max="9" class="w-10 h-8 bg-slate-900 border border-slate-700 border-r-0 rounded-l text-center focus:outline-none focus:border-indigo-500">
+                            <div class="flex flex-col h-8">
+                                <button onclick="adj('rowsA', 1)" class="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-400 hover:text-white text-[8px] w-5 h-1/2 flex items-center justify-center rounded-tr transition"><i class="fas fa-chevron-up"></i></button>
+                                <button onclick="adj('rowsA', -1)" class="bg-slate-800 border-x border-b border-slate-700 hover:bg-slate-700 text-slate-400 hover:text-white text-[8px] w-5 h-1/2 flex items-center justify-center rounded-br transition"><i class="fas fa-chevron-down"></i></button>
+                            </div>
+                        </div>
+                        
+                        <span class="text-slate-500">×</span>
+                        
+                        <!-- Cols A -->
+                        <div class="flex items-center">
+                            <input type="number" id="colsA" value="3" min="1" max="9" class="w-10 h-8 bg-slate-900 border border-slate-700 border-r-0 rounded-l text-center focus:outline-none focus:border-indigo-500">
+                            <div class="flex flex-col h-8">
+                                <button onclick="adj('colsA', 1)" class="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-400 hover:text-white text-[8px] w-5 h-1/2 flex items-center justify-center rounded-tr transition"><i class="fas fa-chevron-up"></i></button>
+                                <button onclick="adj('colsA', -1)" class="bg-slate-800 border-x border-b border-slate-700 hover:bg-slate-700 text-slate-400 hover:text-white text-[8px] w-5 h-1/2 flex items-center justify-center rounded-br transition"><i class="fas fa-chevron-down"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="h-4 w-px bg-slate-700 mx-1"></div>
+                    <button onclick="fill('A', 'zero')" class="text-slate-400 hover:text-white" title="Clear"><i class="fas fa-eraser"></i></button>
+                    <button onclick="fill('A', 'ident')" class="text-slate-400 hover:text-white" title="Identity"><i class="fas fa-border-all"></i></button>
+                    <button onclick="fill('A', 'rand')" class="text-slate-400 hover:text-white" title="Random"><i class="fas fa-dice"></i></button>
+                </div>
+                
+                <div class="bracket-container">
+                    <div class="bracket-l"></div>
+                    <div class="bracket-r"></div>
+                    <div id="gridA" class="matrix-grid py-2"></div>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center">
+                <div class="flex items-center gap-4 mb-4 bg-slate-800/50 p-2 rounded-lg border border-slate-700">
+                    <span class="font-bold text-pink-400 px-2">B</span>
+                    
+                    <div class="flex items-center gap-2 text-sm">
+                        <!-- Rows B -->
+                        <div class="flex items-center">
+                            <input type="number" id="rowsB" value="3" min="1" max="9" class="w-10 h-8 bg-slate-900 border border-slate-700 border-r-0 rounded-l text-center focus:outline-none focus:border-indigo-500">
+                            <div class="flex flex-col h-8">
+                                <button onclick="adj('rowsB', 1)" class="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-400 hover:text-white text-[8px] w-5 h-1/2 flex items-center justify-center rounded-tr transition"><i class="fas fa-chevron-up"></i></button>
+                                <button onclick="adj('rowsB', -1)" class="bg-slate-800 border-x border-b border-slate-700 hover:bg-slate-700 text-slate-400 hover:text-white text-[8px] w-5 h-1/2 flex items-center justify-center rounded-br transition"><i class="fas fa-chevron-down"></i></button>
+                            </div>
+                        </div>
+                        
+                        <span class="text-slate-500">×</span>
+                        
+                        <!-- Cols B -->
+                        <div class="flex items-center">
+                            <input type="number" id="colsB" value="3" min="1" max="9" class="w-10 h-8 bg-slate-900 border border-slate-700 border-r-0 rounded-l text-center focus:outline-none focus:border-indigo-500">
+                            <div class="flex flex-col h-8">
+                                <button onclick="adj('colsB', 1)" class="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-400 hover:text-white text-[8px] w-5 h-1/2 flex items-center justify-center rounded-tr transition"><i class="fas fa-chevron-up"></i></button>
+                                <button onclick="adj('colsB', -1)" class="bg-slate-800 border-x border-b border-slate-700 hover:bg-slate-700 text-slate-400 hover:text-white text-[8px] w-5 h-1/2 flex items-center justify-center rounded-br transition"><i class="fas fa-chevron-down"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="h-4 w-px bg-slate-700 mx-1"></div>
+                    <button onclick="fill('B', 'zero')" class="text-slate-400 hover:text-white" title="Clear"><i class="fas fa-eraser"></i></button>
+                    <button onclick="fill('B', 'ident')" class="text-slate-400 hover:text-white" title="Identity"><i class="fas fa-border-all"></i></button>
+                    <button onclick="fill('B', 'rand')" class="text-slate-400 hover:text-white" title="Random"><i class="fas fa-dice"></i></button>
+                </div>
+
+                <div class="bracket-container">
+                    <div class="bracket-l"></div>
+                    <div class="bracket-r"></div>
+                    <div id="gridB" class="matrix-grid py-2"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="glass rounded-xl p-4 flex flex-wrap justify-center gap-3 shadow-lg z-10 sticky top-4 md:static">
+            
+            <button class="op-btn bg-slate-800 text-indigo-300 border border-indigo-900/50 px-6 py-3 rounded-lg flex items-center gap-2 font-mono font-bold" onclick="calc('add')">
+                <i class="fas fa-plus text-xs"></i> ADD
+            </button>
+            
+            <button class="op-btn bg-slate-800 text-indigo-300 border border-indigo-900/50 px-6 py-3 rounded-lg flex items-center gap-2 font-mono font-bold" onclick="calc('sub')">
+                <i class="fas fa-minus text-xs"></i> SUB
+            </button>
+
+            <div class="w-px bg-slate-700 mx-2"></div>
+
+            <button class="op-btn bg-slate-800 text-emerald-300 border border-emerald-900/50 px-6 py-3 rounded-lg flex items-center gap-2 font-mono font-bold" onclick="calc('mul')">
+                <i class="fas fa-times text-xs"></i> CROSS
+            </button>
+
+            <button class="op-btn bg-slate-800 text-emerald-300 border border-emerald-900/50 px-6 py-3 rounded-lg flex items-center gap-2 font-mono font-bold" onclick="calc('dot')">
+                <i class="fas fa-circle text-[8px]"></i> DOT
+            </button>
+
+            <div class="w-px bg-slate-700 mx-2"></div>
+
+            <button class="op-btn bg-slate-800 text-orange-300 border border-orange-900/50 px-6 py-3 rounded-lg flex items-center gap-2 font-mono font-bold" onclick="calc('join')">
+                ∨ JOIN
+            </button>
+
+            <button class="op-btn bg-slate-800 text-orange-300 border border-orange-900/50 px-6 py-3 rounded-lg flex items-center gap-2 font-mono font-bold" onclick="calc('meet')">
+                ∧ MEET
+            </button>
+
+            <button class="op-btn bg-slate-800 text-orange-300 border border-orange-900/50 px-6 py-3 rounded-lg flex items-center gap-2 font-mono font-bold" onclick="calc('bool_prod')">
+                ⊙ BOOL
+            </button>
+
+            <div class="w-full text-center mt-2 text-xs text-slate-500" id="dim-warning">
+                Ready
+            </div>
+        </div>
+
+        <div id="result-container" class="hidden flex-col items-center animate-[fadeIn_0.5s_ease-out]">
+            <div class="text-slate-400 text-sm mb-4 font-mono tracking-wide uppercase" id="result-title">Result</div>
+            <div class="glass p-8 rounded-2xl border border-slate-700 shadow-2xl bg-slate-900/80">
+                <div class="bracket-container">
+                    <div class="bracket-l border-emerald-500/50"></div>
+                    <div class="bracket-r border-emerald-500/50"></div>
+                    <div id="gridResult" class="matrix-grid py-2 gap-2"></div>
+                </div>
+            </div>
+            <div class="mt-4 flex gap-4">
+                <button onclick="copyTo('A')" class="text-xs text-slate-500 hover:text-indigo-400 transition">Copy to A</button>
+                <button onclick="copyTo('B')" class="text-xs text-slate-500 hover:text-pink-400 transition">Copy to B</button>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="mt-auto py-6 text-center text-slate-500 text-xs">
+        <p>&copy; Matrix Opr. Made by Tseki with help of Gemini</p>
+    </footer>
+
+    <script>
+        const state = {
+            A: { r: 3, c: 3 },
+            B: { r: 3, c: 3 },
+            res: null
+        };
+
+        const config = {
+            maxDim: 9,
+            cellW: '60px',
+            cellH: '40px'
+        };
+
+        function init() {
+            bindInputs();
+            if (!load()) {
+                render('A');
+                render('B');
+            }
+            checkDims();
+        }
+
+        function bindInputs() {
+            ['rowsA', 'colsA', 'rowsB', 'colsB'].forEach(id => {
+                const el = document.getElementById(id);
+                // Listen to 'input' for immediate feedback, not just 'change'
+                el.addEventListener('input', (e) => {
+                    let val = parseInt(e.target.value);
+                    if (isNaN(val)) return; // Don't update if empty or invalid
+                    
+                    val = Math.max(1, Math.min(config.maxDim, val));
+                    
+                    // Don't override input value while user is typing unless it exceeds limits
+                    // but we do update the state and render
+                    
+                    const type = id.slice(-1);
+                    const dim = id.includes('rows') ? 'r' : 'c';
+                    
+                    if (state[type][dim] === val) return;
+
+                    // Capture data BEFORE updating state to avoid dimension mismatch crash
+                    const oldData = getData(type);
+                    
+                    state[type][dim] = val;
+                    render(type, oldData); // Pass old data explicitly
+                    checkDims();
+                    save();
+                });
+            });
+        }
+
+        function adj(id, delta) {
+            const el = document.getElementById(id);
+            let val = parseInt(el.value) || 1;
+            val += delta;
+            if (val < 1) val = 1;
+            if (val > config.maxDim) val = config.maxDim;
+            el.value = val;
+            // Trigger input event to run the logic in bindInputs
+            el.dispatchEvent(new Event('input'));
+        }
+
+        function getData(type) {
+            const grid = document.getElementById(`grid${type}`);
+            const inputs = Array.from(grid.querySelectorAll('input'));
+            if (inputs.length === 0) return null;
+
+            const { r, c } = state[type];
+            const data = [];
+            // Safe navigation: ensure we don't read past what exists in DOM
+            // This protects against cases where state is updated before DOM
+            for(let i=0; i<r; i++) {
+                const row = [];
+                for(let j=0; j<c; j++) {
+                    const idx = i*c + j;
+                    if (inputs[idx]) {
+                        row.push(parseFloat(inputs[idx].value) || 0);
+                    } else {
+                        row.push(0);
+                    }
+                }
+                data.push(row);
+            }
+            return data;
+        }
+
+        function render(type, oldData = null) {
+            const { r, c } = state[type];
+            const grid = document.getElementById(`grid${type}`);
+            
+            grid.style.gridTemplateColumns = `repeat(${c}, ${config.cellW})`;
+            grid.innerHTML = '';
+
+            for(let i=0; i<r; i++) {
+                for(let j=0; j<c; j++) {
+                    const inp = document.createElement('input');
+                    inp.type = 'number';
+                    inp.className = 'matrix-cell w-full h-10 bg-slate-800 border border-slate-700 rounded text-slate-200 text-sm font-mono outline-none';
+                    inp.dataset.r = i;
+                    inp.dataset.c = j;
+                    
+                    if (oldData && i < oldData.length && j < oldData[0].length) {
+                        inp.value = oldData[i][j];
+                    } else {
+                        inp.value = 0;
+                    }
+
+                    inp.onkeydown = (e) => nav(e, type, i, j);
+                    inp.oninput = save;
+                    inp.onfocus = (e) => e.target.select();
+                    grid.appendChild(inp);
+                }
+            }
+        }
+
+        function nav(e, type, r, c) {
+            if (!e.key.startsWith('Arrow')) return;
+            e.preventDefault();
+            const { r: maxR, c: maxC } = state[type];
+            let nr = r, nc = c;
+
+            if (e.key === 'ArrowUp') nr = Math.max(0, r - 1);
+            if (e.key === 'ArrowDown') nr = Math.min(maxR - 1, r + 1);
+            if (e.key === 'ArrowLeft') nc = Math.max(0, c - 1);
+            if (e.key === 'ArrowRight') nc = Math.min(maxC - 1, c + 1);
+
+            const idx = nr * maxC + nc;
+            const inputs = document.getElementById(`grid${type}`).querySelectorAll('input');
+            if (inputs[idx]) inputs[idx].focus();
+        }
+
+        function fill(type, mode) {
+            const inputs = document.getElementById(`grid${type}`).querySelectorAll('input');
+            const { r, c } = state[type];
+            
+            inputs.forEach((inp, idx) => {
+                const ir = Math.floor(idx / c);
+                const ic = idx % c;
+                
+                if (mode === 'zero') inp.value = 0;
+                else if (mode === 'rand') inp.value = Math.floor(Math.random() * 20) - 10;
+                else if (mode === 'ident') inp.value = (ir === ic) ? 1 : 0;
+            });
+            save();
+            toast(`${type} filled with ${mode}`);
+        }
+
+        function calc(op) {
+            const A = getData('A');
+            const B = getData('B');
+            if (!A || !B) return;
+
+            let res = [];
+            let title = "";
+
+            try {
+                if (op === 'add') {
+                    if (state.A.r !== state.B.r || state.A.c !== state.B.c) throw new Error("Dimensions must match");
+                    title = "A + B";
+                    res = A.map((row, i) => row.map((val, j) => val + B[i][j]));
+                }
+                else if (op === 'sub') {
+                    if (state.A.r !== state.B.r || state.A.c !== state.B.c) throw new Error("Dimensions must match");
+                    title = "A - B";
+                    res = A.map((row, i) => row.map((val, j) => val - B[i][j]));
+                }
+                else if (op === 'dot') {
+                    if (state.A.r !== state.B.r || state.A.c !== state.B.c) throw new Error("Dimensions must match");
+                    title = "A . B (Element-wise)";
+                    res = A.map((row, i) => row.map((val, j) => val * B[i][j]));
+                }
+                else if (op === 'mul') {
+                    if (state.A.c !== state.B.r) throw new Error(`Cols A (${state.A.c}) must equal Rows B (${state.B.r})`);
+                    title = "A × B";
+                    res = new Array(state.A.r).fill(0).map(() => new Array(state.B.c).fill(0));
+                    for (let i = 0; i < state.A.r; i++) {
+                        for (let j = 0; j < state.B.c; j++) {
+                            let sum = 0;
+                            for (let k = 0; k < state.A.c; k++) {
+                                sum += A[i][k] * B[k][j];
+                            }
+                            res[i][j] = parseFloat(sum.toFixed(4));
+                        }
+                    }
+                }
+                else if (op === 'join') {
+                    if (state.A.r !== state.B.r || state.A.c !== state.B.c) throw new Error("Dimensions must match");
+                    title = "A ∨ B";
+                    res = A.map((row, i) => row.map((val, j) => (val || B[i][j]) ? 1 : 0));
+                }
+                else if (op === 'meet') {
+                    if (state.A.r !== state.B.r || state.A.c !== state.B.c) throw new Error("Dimensions must match");
+                    title = "A ∧ B";
+                    res = A.map((row, i) => row.map((val, j) => (val && B[i][j]) ? 1 : 0));
+                }
+                else if (op === 'bool_prod') {
+                    if (state.A.c !== state.B.r) throw new Error("Cols A must equal Rows B");
+                    title = "A ⊙ B";
+                    res = new Array(state.A.r).fill(0).map(() => new Array(state.B.c).fill(0));
+                    for (let i = 0; i < state.A.r; i++) {
+                        for (let j = 0; j < state.B.c; j++) {
+                            let val = 0;
+                            for (let k = 0; k < state.A.c; k++) {
+                                if (A[i][k] && B[k][j]) { val = 1; break; }
+                            }
+                            res[i][j] = val;
+                        }
+                    }
+                }
+
+                state.res = res;
+                showResult(res, title);
+
+            } catch (err) {
+                toast(err.message, true);
+            }
+        }
+
+        function showResult(data, title) {
+            const container = document.getElementById('result-container');
+            const grid = document.getElementById('gridResult');
+            document.getElementById('result-title').innerText = title;
+
+            const r = data.length;
+            const c = data[0].length;
+            
+            grid.style.gridTemplateColumns = `repeat(${c}, ${config.cellW})`;
+            grid.innerHTML = '';
+
+            data.forEach(row => {
+                row.forEach(val => {
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-center h-10 text-emerald-400 font-mono font-bold bg-slate-800/50 rounded border border-slate-700/50';
+                    div.innerText = val;
+                    grid.appendChild(div);
+                });
+            });
+
+            container.classList.remove('hidden');
+            container.classList.add('flex');
+            container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function checkDims() {
+            const msg = document.getElementById('dim-warning');
+            const ar = state.A.r, ac = state.A.c;
+            const br = state.B.r, bc = state.B.c;
+            
+            const btns = document.querySelectorAll('.op-btn');
+            
+            btns.forEach(btn => {
+                const fn = btn.getAttribute('onclick');
+                let valid = false;
+                
+                if (fn.includes('add') || fn.includes('sub') || fn.includes('join') || fn.includes('meet') || fn.includes('dot')) {
+                    valid = (ar === br && ac === bc);
+                } else if (fn.includes('mul') || fn.includes('bool_prod')) {
+                    valid = (ac === br);
+                }
+                
+                btn.disabled = !valid;
+                btn.style.opacity = valid ? '1' : '0.4';
+            });
+
+            if (ar === br && ac === bc && ac === br) {
+                msg.innerText = "All operations available";
+                msg.className = "w-full text-center mt-2 text-xs text-emerald-500";
+            } else if (ar === br && ac === bc) {
+                msg.innerText = "Dimensions Match (Add/Sub/Bool available)";
+                msg.className = "w-full text-center mt-2 text-xs text-indigo-400";
+            } else if (ac === br) {
+                msg.innerText = "Chainable (Multiplication available)";
+                msg.className = "w-full text-center mt-2 text-xs text-blue-400";
+            } else {
+                msg.innerText = "Dimension Mismatch";
+                msg.className = "w-full text-center mt-2 text-xs text-red-400";
+            }
+        }
+
+        function copyTo(target) {
+            if (!state.res) return;
+            const data = state.res;
+            const r = data.length;
+            const c = data[0].length;
+            
+            document.getElementById(`rows${target}`).value = r;
+            document.getElementById(`cols${target}`).value = c;
+            
+            state[target].r = r;
+            state[target].c = c;
+            
+            render(target); 
+            
+            setTimeout(() => {
+                const inputs = document.getElementById(`grid${target}`).querySelectorAll('input');
+                data.forEach((row, i) => {
+                    row.forEach((val, j) => {
+                        if (inputs[i*c + j]) inputs[i*c + j].value = val;
+                    });
+                });
+                checkDims();
+                save();
+                toast(`Copied to Matrix ${target}`);
+            }, 50);
+        }
+
+        function toast(msg, err = false) {
+            const el = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            el.firstElementChild.classList.remove('bg-indigo-600', 'bg-red-600');
+            el.firstElementChild.classList.add(err ? 'bg-red-600' : 'bg-indigo-600');
+            
+            el.classList.remove('opacity-0', 'translate-x-32');
+            setTimeout(() => el.classList.add('opacity-0', 'translate-x-32'), 2500);
+        }
+
+        function save() {
+            const s = {
+                A: { ...state.A, data: getData('A') },
+                B: { ...state.B, data: getData('B') }
+            };
+            localStorage.setItem('matrix_calc_data', JSON.stringify(s));
+        }
+
+        function load() {
+            try {
+                const s = JSON.parse(localStorage.getItem('matrix_calc_data'));
+                if (!s) return false;
+                
+                state.A.r = s.A.r; state.A.c = s.A.c;
+                state.B.r = s.B.r; state.B.c = s.B.c;
+                
+                document.getElementById('rowsA').value = s.A.r;
+                document.getElementById('colsA').value = s.A.c;
+                document.getElementById('rowsB').value = s.B.r;
+                document.getElementById('colsB').value = s.B.c;
+                
+                render('A');
+                fillGrid('A', s.A.data);
+                
+                render('B');
+                fillGrid('B', s.B.data);
+                
+                return true;
+            } catch(e) {
+                return false;
+            }
+        }
+
+        function fillGrid(type, data) {
+            if(!data) return;
+            const inputs = document.getElementById(`grid${type}`).querySelectorAll('input');
+            data.forEach((row, i) => {
+                row.forEach((val, j) => {
+                    const idx = i * state[type].c + j;
+                    if(inputs[idx]) inputs[idx].value = val;
+                });
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
